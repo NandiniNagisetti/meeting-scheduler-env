@@ -1,22 +1,33 @@
+import random
 from env import MeetingEnv
 from models import Action
+from grader import grade
 
-env = MeetingEnv()
-obs = env.reset()
+def run_baseline():
+    random.seed(42)  # reproducibility
 
-done = False
-total_score = 0
+    scores = {}
 
-while not done:
-    req = obs.current_request
+    for difficulty in ["easy", "medium", "hard"]:
+        env = MeetingEnv(difficulty)
+        obs = env.reset()
+        done = False
 
-    # Smarter baseline
-    if env.schedule[req.time] == 0 and req.priority >= 3:
-        action = Action(action_type="schedule")
-    else:
-        action = Action(action_type="reject")
+        while not done:
+            req = obs.current_request
 
-    obs, reward, done, _ = env.step(action)
-    total_score += reward.score
+            # simple strategy
+            if req.priority >= 3:
+                action = Action(action_type="schedule")
+            else:
+                action = Action(action_type="reject")
 
-print("Baseline Score:", total_score)
+            obs, reward, done, _ = env.step(action)
+
+        score = grade(env)
+        scores[difficulty] = score
+
+    return scores
+
+if __name__ == "__main__":
+    print(run_baseline())
