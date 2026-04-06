@@ -1,7 +1,17 @@
 name: meeting-scheduler-env
-description: AI environment for scheduling meetings without conflicts
-version: 0.1
-
+description: AI environment for scheduling meetings with priority optimization
 entry_point: env:MeetingEnv
 
+observation_space:
+  schedule: list[int]
+  current_request: object
+
+action_space:
+  action_type: string
+
 reward_range: [0.0, 1.0]
+
+tasks:
+  - easy
+  - medium
+  - hard
