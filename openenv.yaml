@@ -1,1 +1,7 @@
+name: meeting-scheduler-env
+description: AI environment for scheduling meetings without conflicts
+version: 0.1
 
+entry_point: env:MeetingEnv
+
+reward_range: [0.0, 1.0]
