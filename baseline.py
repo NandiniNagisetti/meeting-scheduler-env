@@ -1,4 +1,3 @@
-
 from env import MeetingEnv
 from models import Action
 
@@ -11,7 +10,8 @@ total_score = 0
 while not done:
     req = obs.current_request
 
-    if env.schedule[req.time] == 0:
+    # Smarter baseline
+    if env.schedule[req.time] == 0 and req.priority >= 3:
         action = Action(action_type="schedule")
     else:
         action = Action(action_type="reject")
