@@ -1,21 +1,35 @@
 from models import *
 import random
 
+
 class MeetingEnv:
     def __init__(self):
         self.reset()
 
-    def reset(self):
-        self.schedule = [0] * 10
+    def generate_participant(self, name):
+        return Participant(
+            name=name,
+            availability=[random.choice([0, 1]) for _ in range(10)],
+            preferred_times=random.sample(range(10), 3)
+        )
 
-        # Generate random meeting requests (more realistic)
+    def reset(self):
+        self.global_schedule = [0] * 10
         self.requests = []
-        for i in range(6):
+
+        for i in range(5):
+            participants = [
+                self.generate_participant(f"P{j}") for j in range(random.randint(2, 4))
+            ]
+
             self.requests.append(
                 MeetingRequest(
                     name=f"Meeting {i}",
-                    time=random.randint(0, 9),
-                    priority=random.randint(1, 5)
+                    duration=random.randint(1, 3),
+                    participants=participants,
+                    priority=random.randint(1, 5),
+                    deadline=random.randint(5, 9),
+                    is_recurring=random.choice([False, True])
                 )
             )
 
@@ -26,40 +40,76 @@ class MeetingEnv:
     def state(self):
         if self.index < len(self.requests):
             return Observation(
-                schedule=self.schedule,
+                global_schedule=self.global_schedule,
                 current_request=self.requests[self.index]
             )
-        return Observation(schedule=self.schedule, current_request=None)
+        return Observation(global_schedule=self.global_schedule, current_request=None)
+
+    def check_availability(self, request, start):
+        end = start + request.duration
+
+        if end > 10:
+            return False
+
+        # Check global schedule
+        if any(self.global_schedule[t] == 1 for t in range(start, end)):
+            return False
+
+        # Check all participants
+        for p in request.participants:
+            if any(p.availability[t] == 0 for t in range(start, end)):
+                return False
+
+        return True
+
+    def apply_schedule(self, request, start):
+        end = start + request.duration
+
+        for t in range(start, end):
+            self.global_schedule[t] = 1
+
+    def compute_reward(self, request, start, success):
+        if not success:
+            return -2 * request.priority
+
+        reward = 2 * request.priority
+
+        # ✅ Preference bonus (soft constraint)
+        preference_bonus = 0
+        for p in request.participants:
+            if start in p.preferred_times:
+                preference_bonus += 0.5
+
+        # ✅ Deadline penalty
+        if start > request.deadline:
+            reward -= 2
+
+        # ✅ Recurring penalty (harder to schedule)
+        if request.is_recurring:
+            reward -= 1
+
+        return reward + preference_bonus
 
     def step(self, action: Action):
         request = self.requests[self.index]
-        reward = 0.0
 
-        # Scheduling logic
-        if action.action_type == "schedule":
-            if self.schedule[request.time] == 0:
-                self.schedule[request.time] = 1
+        success = False
+        reward = 0
 
-                # Reward depends on priority
-                reward = 0.5 + (request.priority * 0.2)
+        if action.action_type == "schedule" and action.start_time is not None:
+            if self.check_availability(request, action.start_time):
+                self.apply_schedule(request, action.start_time)
+                success = True
 
-            else:
-                # Conflict penalty (worse if high priority wasted)
-                reward = -1.0 - (request.priority * 0.2)
+        reward = self.compute_reward(request, action.start_time or 0, success)
 
-        elif action.action_type == "reject":
-            # Small penalty for rejecting high-priority meetings
-            reward = -0.2 * request.priority
-
-        # Move to next request
         self.index += 1
         done = self.index >= len(self.requests)
 
-        # Efficiency bonus at end
+        # Efficiency bonus
         if done:
-            filled = sum(self.schedule)
-            efficiency = filled / len(self.schedule)
-            reward += efficiency  # bonus
+            filled = sum(self.global_schedule)
+            reward += filled / len(self.global_schedule)
 
         self.total_reward += reward
 
