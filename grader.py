@@ -1,22 +1,31 @@
-def grade(env):
-    total_slots = len(env.schedule)
-    filled = sum(env.schedule)
+from pydantic import BaseModel
+from typing import List, Optional
 
-    efficiency = filled / total_slots
 
-    # Priority score
-    max_priority = sum([r.priority for r in env.requests])
-    achieved_priority = sum([
-        r.priority for i, r in enumerate(env.requests)
-        if i < len(env.schedule) and env.schedule[r.time] == 1
-    ])
+class Participant(BaseModel):
+    name: str
+    availability: List[int]  # 10 slots (1 = free, 0 = busy)
+    preferred_times: List[int]  # soft preference
 
-    if max_priority == 0:
-        priority_score = 0
-    else:
-        priority_score = achieved_priority / max_priority
 
-    # Final score
-    score = (0.5 * efficiency) + (0.5 * priority_score)
+class MeetingRequest(BaseModel):
+    name: str
+    duration: int
+    participants: List[Participant]
+    priority: int
+    deadline: int  # latest acceptable start time
+    is_recurring: bool = False
 
-    return round(score, 3)
+
+class Observation(BaseModel):
+    global_schedule: List[int]
+    current_request: Optional[MeetingRequest]
+
+
+class Action(BaseModel):
+    action_type: str  # "schedule" or "reject"
+    start_time: Optional[int] = None
+
+
+class Reward(BaseModel):
+    score: float
