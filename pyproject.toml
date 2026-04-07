@@ -1,0 +1,12 @@
+[project]
+name = "smart-meeting-scheduler"
+version = "0.1.0"
+description = "AI Meeting Scheduler"
+authors = [
+    { name = "Nandini" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic"
+]
