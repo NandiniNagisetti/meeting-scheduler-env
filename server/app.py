@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import random
 
 app = FastAPI()
 
-# simple env simulation (no gradio dependency)
 schedule = [0] * 10
 
 class Request(BaseModel):
@@ -33,18 +31,23 @@ def predict(req: Request):
             return {
                 "output": {
                     "status": "scheduled",
-                    "slot": i,
-                    "schedule": schedule
+                    "slot": i
                 }
             }
 
     return {
         "output": {
-            "status": "full",
-            "schedule": schedule
+            "status": "full"
         }
     }
-    return {
-        "status": "full",
-        "schedule": schedule
-    }
+
+
+# ✅ REQUIRED MAIN FUNCTION
+def main():
+    import uvicorn
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
+
+
+# ✅ REQUIRED ENTRY POINT
+if __name__ == "__main__":
+    main()
