@@ -1,29 +1,99 @@
-# inference.py
+Hugging Face's logo
+Hugging Face
+Models
+Datasets
+Spaces
+Buckets
+new
+Docs
+Enterprise
+Pricing
+
+
+Hugging Face is way more fun with friends and colleagues! 🤗 Join an organization
+Spaces:
+Nandininagisetti
+/
+smart-meeting-scheduler-env
+
+
+like
+0
+
+Logs
+App
+Files
+Community
+Settings
+smart-meeting-scheduler-env
+/
+inference.py
+
+Nandininagisetti's picture
+Nandininagisetti
+Update inference.py
+fc02960
+verified
+9 minutes ago
+raw
+
+Copy download link
+history
+blame
+edit
+delete
+1.11 kB
+from fastapi import FastAPI
+from pydantic import BaseModel
 import random
 
-# simple env simulation
-schedule = [0] * 10
-task_name = "meeting_scheduler"
+app = FastAPI()
 
-print(f"[START] task={task_name}", flush=True)
+class Env:
+    def __init__(self):
+        self.reset()
 
-total_reward = 0
-num_steps = 0
+    def reset(self):
+        self.schedule = [0]*8
+        self.request = {"time": random.randint(0,7)}
+        return self.state()
 
-for step in range(1, 11):
-    # find first free slot
-    try:
-        slot = schedule.index(0)
-        schedule[slot] = 1
-        reward = 1  # reward for successful scheduling
-    except ValueError:
-        slot = -1
-        reward = 0  # no free slot
+    def step(self, action):
+        t = self.request["time"]
 
-    total_reward += reward
-    num_steps += 1
+        if action == "schedule":
+            if self.schedule[t] == 1:
+                reward = -1
+            else:
+                self.schedule[t] = 1
+                reward = 1
+        else:
+            reward = 0
 
-    print(f"[STEP] step={step} reward={reward}", flush=True)
+        self.request = {"time": random.randint(0,7)}
+        return self.state(), reward, False
 
-final_score = total_reward / num_steps
-print(f"[END] task={task_name} score={final_score:.2f} steps={num_steps}", flush=True)
+    def state(self):
+        return {
+            "schedule": self.schedule,
+            "request": self.request
+        }
+
+env = Env()
+
+class Action(BaseModel):
+    action: str
+
+@app.post("/reset")
+def reset():
+    return {"state": env.reset()}
+
+@app.post("/step")
+def step(a: Action):
+    s, r, d = env.step(a.action)
+    return {"state": s, "reward": r, "done": d}
+
+@app.get("/")
+def home():
+    return {"message": "OpenEnv server is running"}
+
