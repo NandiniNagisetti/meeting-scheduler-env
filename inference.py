@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import random
 
+# 👇 keep your imports
+import os
+from openai import OpenAI
+
 app = FastAPI()
 
 # -------- ENV --------
@@ -59,16 +63,37 @@ def state():
     return {"state": env.state()}
 
 
-# -------- 🚨 PHASE 2 RUNNER (VERY IMPORTANT) --------
+# -------- 🚨 PHASE 2 RUNNER --------
 def run_phase2():
     logs = []
     logs.append("[START] task=meeting_scheduler")
+
+    # ✅ CREATE CLIENT HERE (IMPORTANT)
+    client = OpenAI(
+        base_url=os.environ.get("API_BASE_URL"),
+        api_key=os.environ.get("API_KEY"),
+    )
 
     env.reset()
     total_reward = 0
 
     for step in range(1, 11):
-        action = "schedule"
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Choose: schedule or reject."},
+                {"role": "user", "content": str(env.state())}
+            ],
+        )
+
+        action = response.choices[0].message.content.lower()
+
+        if "schedule" in action:
+            action = "schedule"
+        else:
+            action = "reject"
+
         _, reward, _ = env.step(action)
 
         total_reward += reward
@@ -77,10 +102,9 @@ def run_phase2():
     score = total_reward / 10
     logs.append(f"[END] task=meeting_scheduler score={score:.2f} steps=10")
 
-    # 🚨 PRINT TO STDOUT (REQUIRED)
     print("\n".join(logs), flush=True)
 
 
-# 🚨 THIS PART FIXES YOUR FAILURE
+# -------- ENTRY POINT --------
 if __name__ == "__main__":
     run_phase2()
