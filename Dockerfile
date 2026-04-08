@@ -1,13 +1,14 @@
+# Dockerfile
 FROM python:3.10-slim
 
-WORKDIR /app
+# Install dependencies
+RUN pip install --no-cache-dir gradio==3.45
 
-COPY . .
+# Copy code
+COPY inference.py /workspace/inference.py
 
-# 🔥 FORCE install everything (important)
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install gradio speechrecognition
+# Set working dir
+WORKDIR /workspace
 
-EXPOSE 7860
-
-CMD ["uvicorn", "inference:app", "--host", "0.0.0.0", "--port", "7860"]
+# Default command for OpenEnv
+CMD ["python", "inference.py"]
