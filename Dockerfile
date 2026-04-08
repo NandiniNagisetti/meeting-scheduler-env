@@ -1,14 +1,9 @@
-# Dockerfile
 FROM python:3.10-slim
 
-# Install dependencies
-RUN pip install --no-cache-dir gradio==3.45
+WORKDIR /app
 
-# Copy code
-COPY inference.py /workspace/inference.py
+COPY . /app
 
-# Set working dir
-WORKDIR /workspace
+RUN pip install --no-cache-dir fastapi uvicorn pydantic
 
-# Default command for OpenEnv
-CMD ["python", "inference.py"]
+CMD ["python", "-m", "uvicorn", "inference:app", "--host", "0.0.0.0", "--port", "7860"]
