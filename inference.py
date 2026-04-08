@@ -1,43 +1,29 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+# inference.py
 import random
 
-app = FastAPI()
-
-# simple env simulation (no gradio dependency)
+# simple env simulation
 schedule = [0] * 10
+task_name = "meeting_scheduler"
 
-class Request(BaseModel):
-    input: str = "schedule meeting"
+print(f"[START] task={task_name}", flush=True)
 
+total_reward = 0
+num_steps = 0
 
-@app.get("/")
-def home():
-    return {"message": "running"}
+for step in range(1, 11):
+    # find first free slot
+    try:
+        slot = schedule.index(0)
+        schedule[slot] = 1
+        reward = 1  # reward for successful scheduling
+    except ValueError:
+        slot = -1
+        reward = 0  # no free slot
 
+    total_reward += reward
+    num_steps += 1
 
-@app.post("/reset")
-def reset():
-    global schedule
-    schedule = [0] * 10
-    return {"status": "ok"}
+    print(f"[STEP] step={step} reward={reward}", flush=True)
 
-
-@app.post("/predict")
-def predict(req: Request):
-    global schedule
-
-    # simple scheduling logic (safe)
-    for i in range(len(schedule)):
-        if schedule[i] == 0:
-            schedule[i] = 1
-            return {
-                "status": "scheduled",
-                "slot": i,
-                "schedule": schedule
-            }
-
-    return {
-        "status": "full",
-        "schedule": schedule
-    }
+final_score = total_reward / num_steps
+print(f"[END] task={task_name} score={final_score:.2f} steps={num_steps}", flush=True)
