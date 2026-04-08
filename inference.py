@@ -1,54 +1,10 @@
-Hugging Face's logo
-Hugging Face
-Models
-Datasets
-Spaces
-Buckets
-new
-Docs
-Enterprise
-Pricing
-
-
-Hugging Face is way more fun with friends and colleagues! 🤗 Join an organization
-Spaces:
-Nandininagisetti
-/
-smart-meeting-scheduler-env
-
-
-like
-0
-
-Logs
-App
-Files
-Community
-Settings
-smart-meeting-scheduler-env
-/
-inference.py
-
-Nandininagisetti's picture
-Nandininagisetti
-Update inference.py
-fc02960
-verified
-9 minutes ago
-raw
-
-Copy download link
-history
-blame
-edit
-delete
-1.11 kB
 from fastapi import FastAPI
 from pydantic import BaseModel
 import random
 
 app = FastAPI()
 
+# -------- ENV --------
 class Env:
     def __init__(self):
         self.reset()
@@ -81,19 +37,50 @@ class Env:
 
 env = Env()
 
+# -------- API --------
 class Action(BaseModel):
     action: str
 
+@app.get("/")
+def home():
+    return {"message": "OpenEnv server is running"}
+
 @app.post("/reset")
 def reset():
-    return {"state": env.reset()}
+    return {"state": env.reset(), "reward": 0, "done": False}
 
 @app.post("/step")
 def step(a: Action):
     s, r, d = env.step(a.action)
     return {"state": s, "reward": r, "done": d}
 
-@app.get("/")
-def home():
-    return {"message": "OpenEnv server is running"}
+@app.get("/state")
+def state():
+    return {"state": env.state()}
 
+
+# -------- 🚨 PHASE 2 RUNNER (VERY IMPORTANT) --------
+def run_phase2():
+    logs = []
+    logs.append("[START] task=meeting_scheduler")
+
+    env.reset()
+    total_reward = 0
+
+    for step in range(1, 11):
+        action = "schedule"
+        _, reward, _ = env.step(action)
+
+        total_reward += reward
+        logs.append(f"[STEP] step={step} reward={reward}")
+
+    score = total_reward / 10
+    logs.append(f"[END] task=meeting_scheduler score={score:.2f} steps=10")
+
+    # 🚨 PRINT TO STDOUT (REQUIRED)
+    print("\n".join(logs), flush=True)
+
+
+# 🚨 THIS PART FIXES YOUR FAILURE
+if __name__ == "__main__":
+    run_phase2()
