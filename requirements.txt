@@ -8,3 +8,8 @@ google-auth
 google-auth-oauthlib
 SpeechRecognition
 pydub
+fastapi
+uvicorn
+gradio==3.39.0
+gradio-client>=0.3.2
+openai>=1.0.0
