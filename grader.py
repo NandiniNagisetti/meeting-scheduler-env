@@ -1,31 +1,22 @@
-from pydantic import BaseModel
-from typing import List, Optional
+def safe_score(x):
+    # force strictly between (0,1)
+    if x <= 0:
+        return 0.1
+    if x >= 1:
+        return 0.9
+    return float(x)
 
 
-class Participant(BaseModel):
-    name: str
-    availability: List[int]  # 10 slots (1 = free, 0 = busy)
-    preferred_times: List[int]  # soft preference
+def grade_easy(total_reward):
+    raw = total_reward / 10
+    return safe_score(raw)
 
 
-class MeetingRequest(BaseModel):
-    name: str
-    duration: int
-    participants: List[Participant]
-    priority: int
-    deadline: int  # latest acceptable start time
-    is_recurring: bool = False
+def grade_medium(total_reward):
+    raw = (total_reward + 2) / 12
+    return safe_score(raw)
 
 
-class Observation(BaseModel):
-    global_schedule: List[int]
-    current_request: Optional[MeetingRequest]
-
-
-class Action(BaseModel):
-    action_type: str  # "schedule" or "reject"
-    start_time: Optional[int] = None
-
-
-class Reward(BaseModel):
-    score: float
+def grade_hard(total_reward):
+    raw = (total_reward + 3) / 15
+    return safe_score(raw)
