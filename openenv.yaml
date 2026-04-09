@@ -1,17 +1,20 @@
-name: meeting-scheduler-env
-description: AI environment for scheduling meetings with priority optimization
-entry_point: env:MeetingEnv
-
-observation_space:
-  schedule: list[int]
-  current_request: object
-
-action_space:
-  action_type: string
-
-reward_range: [0.0, 1.0]
+version: 1
 
 tasks:
-  - easy
-  - medium
-  - hard
+  - id: easy
+    description: Easy task
+    grader:
+      type: function
+      name: grader.grade
+
+  - id: medium
+    description: Medium task
+    grader:
+      type: function
+      name: grader.grade
+
+  - id: hard
+    description: Hard task
+    grader:
+      type: function
+      name: grader.grade
